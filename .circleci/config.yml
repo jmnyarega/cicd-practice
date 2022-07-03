@@ -23,9 +23,3 @@ jobs:
           command: |
             npm install &&
             npm run build
-
-workflows:
-  Example-workflow:
-    jobs:
-      - build
-      - test
