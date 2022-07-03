@@ -24,8 +24,20 @@ jobs:
             npm install &&
             npm run build
 
+  audit:
+    docker:
+      - image: circleci/node:13.8.0
+    steps:
+      - checkout
+      - run:
+          name: Run Audit
+          command: |
+            npm install &&
+            npm audit
+
 workflows:
   Example-workflow:
     jobs:
+      - audit
       - test
       - build
