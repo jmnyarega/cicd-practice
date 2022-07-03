@@ -1,0 +1,29 @@
+version: 2.1
+
+jobs:
+
+  test:
+    docker:
+      - image: circleci/node:13.8.0
+    steps:
+      - checkout
+      - run:
+        name: Test App
+        command: |
+          npm run test
+
+  build:
+    docker:
+      - image: circleci/node:13.8.0
+    steps:
+      - checkout
+      - run:
+        name: Build App
+        command: |
+          npm run build
+
+workflows:
+  Example-workflow:
+    jobs:
+      - build
+      - test
