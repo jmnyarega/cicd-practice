@@ -5,12 +5,15 @@ orbs:
 
 jobs:
 
-  echo_my_name:
+  test_env_vars:
     docker:
       - image: circleci/node:latest
     steps:
-      - run: echo "This is my name echoed below!!!"
-      - run: echo $MY_NAME
+      - checkout
+      - run:
+          name: "This is my name echoed below!!!"
+          command: |
+            echo $MY_NAME
 
   test:
     docker:
@@ -49,7 +52,7 @@ workflows:
   Example-workflow:
     jobs:
       - audit
-      - echo_my_name
+      - test_env_vars
       - test
       - build:
           requires:
