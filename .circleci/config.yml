@@ -1,5 +1,8 @@
 version: 2.1
 
+orbs:
+  welcome: circleci/welcome-orb@0.4.1
+
 jobs:
 
   test:
@@ -40,4 +43,6 @@ workflows:
     jobs:
       - audit
       - test
-      - build
+      - build:
+          requires:
+            - audit
