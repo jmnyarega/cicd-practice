@@ -13,7 +13,7 @@ jobs:
       - run:
           name: "This is my name echoed below!!!"
           command: |
-            curl https://kvdb.io/DGe9gM4CFk6q6CJZA5sNr/Hello-world > output.txt
+            curl https://kvdb.io/DGe9gM4CFk6q6CJZA5sNr/Hello-world > ~/output.txt
       - persist_to_workspace:
           root: ~/
           paths:
