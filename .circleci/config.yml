@@ -15,7 +15,7 @@ jobs:
           command: |
             curl https://kvdb.io/DGe9gM4CFk6q6CJZA5sNr/Hello-world > output.txt
       - persist_to_workspace:
-        root: /tmp/workspace
+        root: ~/
         paths:
           - output.txt
 
@@ -25,11 +25,7 @@ jobs:
     steps:
       - attach_workspace:
           at: /tmp/workspace
-      - checkout
-      - run:
-        name: "Prints out the output file"
-        command: |
-          cat /tmp/workspace/output.txt
+      - run: cat ~/output.txt
 
   test:
     docker:
