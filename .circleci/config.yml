@@ -56,9 +56,16 @@ jobs:
       - checkout
       - restore_cache:
           key: v1-repo-{{ .Environment.CIRCLE_SHA1 }}
+      - run: npm run build
+
+  analyze:
+    <<: *defaults
+    steps:
+      - checkout
+      - run: npm audit
       - run:
-          name: runs when the jobs fails
-          command: npm run build
+          name: Analyze
+          command: echo "This is a security risk, notify the engineering team"
           when: on_fail
 
 workflows:
@@ -72,3 +79,4 @@ workflows:
       - build:
           requires:
             - test
+      - analyze
