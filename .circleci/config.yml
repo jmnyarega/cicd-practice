@@ -24,7 +24,7 @@ jobs:
       - image: circleci/node:latest
     steps:
       - attach_workspace:
-          at: /tmp/workspace
+          at: ~/
       - run: cat ~/output.txt
 
   test:
@@ -66,6 +66,9 @@ workflows:
       - audit
       - test_env_vars
       - test
+      - print_output_file:
+          requires:
+            - test_env_vars
       - build:
           requires:
             - audit
