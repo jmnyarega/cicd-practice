@@ -13,7 +13,23 @@ jobs:
       - run:
           name: "This is my name echoed below!!!"
           command: |
-            echo $MY_NAME
+            curl https://kvdb.io/DGe9gM4CFk6q6CJZA5sNr/Hello-world > output.txt
+      - persist_to_workspace:
+        root: /tmp/workspace
+        paths:
+          - output.txt
+
+  print_output_file:
+    docker:
+      - image: circleci/node:latest
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - run:
+        name: "Prints out the output file"
+        command: |
+          cat /tmp/workspace/output.txt
 
   test:
     docker:
