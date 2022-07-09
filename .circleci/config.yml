@@ -3,62 +3,55 @@ version: 2.1
 orbs:
   welcome: circleci/welcome-orb@0.4.1
 
-jobs:
+defaults: &defaults
+  docker:
+    - image: circleci/node:latest
 
+commands:
+  print_file:
+    description: "Using Parameters to make code modular - using commands"
+    parameters:
+      filename:
+        type: string
+        default: "~/output.txt"
+    steps:
+      - run: cat << parameters.filename >>
+
+jobs:
   test_env_vars:
-    docker:
-      - image: circleci/node:latest
+    <<: *defaults
     steps:
       - checkout
-      - run:
-          name: "This is my name echoed below!!!"
-          command: |
-            curl https://kvdb.io/DGe9gM4CFk6q6CJZA5sNr/Hello-world > ~/output.txt
+      - run: curl https://kvdb.io/DGe9gM4CFk6q6CJZA5sNr/Hello-world > ~/output.txt
       - persist_to_workspace:
           root: ~/
           paths:
             - output.txt
 
   print_output_file:
-    docker:
-      - image: circleci/node:latest
+    <<: *defaults
     steps:
       - attach_workspace:
           at: ~/
-      - run: cat ~/output.txt
+      - print_file
 
   test:
-    docker:
-      - image: circleci/node:13.8.0
+    <<: *defaults
     steps:
       - checkout
-      - run:
-          name: run commands
-          command: |
-            npm install &&
-            npm run test
+      - run: npm install && npm run test
 
   build:
-    docker:
-      - image: circleci/node:13.8.0
+    <<: *defaults
     steps:
       - checkout
-      - run: 
-          name: build commands
-          command: |
-            npm install &&
-            npm run build
+      - run: npm install && npm run build
 
   audit:
-    docker:
-      - image: circleci/node:13.8.0
+    <<: *defaults
     steps:
       - checkout
-      - run:
-          name: Run Audit
-          command: |
-            npm install &&
-            npm audit
+      - run: npm install && npm audit
 
 workflows:
   Example-workflow:
