@@ -15,9 +15,9 @@ jobs:
           command: |
             curl https://kvdb.io/DGe9gM4CFk6q6CJZA5sNr/Hello-world > output.txt
       - persist_to_workspace:
-        root: ~/
-        paths:
-          - output.txt
+          root: ~/
+          paths:
+            - output.txt
 
   print_output_file:
     docker:
