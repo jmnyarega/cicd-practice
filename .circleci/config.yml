@@ -8,14 +8,19 @@ defaults: &defaults
     - image: circleci/node:latest
 
 commands:
-  print_file:
-    description: "Using Parameters to make code modular - using commands"
+  print_file_and_worflow_id:
+    description: "This commans prints file contents & workflowsId"
     parameters:
       filename:
         type: string
         default: "~/output.txt"
+      pipeline_id:
+        type: string
+        default: $CIRCLE_WORKFLOW_ID
+
     steps:
       - run: cat << parameters.filename >>
+      - run: echo << parameters.pipeline_id >>
 
 jobs:
   test_env_vars:
@@ -33,7 +38,7 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/
-      - print_file
+      - print_file_and_worflow_id
 
   test:
     <<: *defaults
@@ -47,21 +52,12 @@ jobs:
       - checkout
       - run: npm install && npm run build
 
-  audit:
-    <<: *defaults
-    steps:
-      - checkout
-      - run: npm install && npm audit
-
 workflows:
   Example-workflow:
     jobs:
-      - audit
+      - build
       - test_env_vars
       - test
       - print_output_file:
           requires:
             - test_env_vars
-      - build:
-          requires:
-            - audit
