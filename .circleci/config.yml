@@ -44,24 +44,31 @@ jobs:
     <<: *defaults
     steps:
       - checkout
+      - run: npm install && npm run test
       - save_cache:
           key: v1-repo-{{ .Environment.CIRCLE_SHA1 }}
           paths:
-            - ~/circleci-demo-workflows
-      - run: npm install && npm run test
+            - .
 
   build:
     <<: *defaults
     steps:
       - checkout
-      - run: npm install && npm run build
+      - restore_cache:
+          key: v1-repo-{{ .Environment.CIRCLE_SHA1 }}
+      - run:
+          name: runs when the jobs fails
+          command: npm run build
+          when: on_fail
 
 workflows:
   Example-workflow:
     jobs:
-      - build
-      - test_env_vars
       - test
+      - test_env_vars
       - print_output_file:
           requires:
             - test_env_vars
+      - build:
+          requires:
+            - test
