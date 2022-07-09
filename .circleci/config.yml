@@ -44,6 +44,10 @@ jobs:
     <<: *defaults
     steps:
       - checkout
+      - save_cache:
+          key: v1-repo-{{ .Environment.CIRCLE_SHA1 }}
+          paths:
+            - ~/circleci-demo-workflows
       - run: npm install && npm run test
 
   build:
