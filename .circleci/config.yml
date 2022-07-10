@@ -68,8 +68,21 @@ jobs:
           command: echo "This is a security risk, notify the engineering team"
           when: on_fail
 
+  create_infra: 
+    docker:
+      - image: amazon/aws-cli
+    steps:
+      - checkout
+      - run:
+          name: Create Cloudformation Stack
+          command: |
+            aws cloudformation deploy \
+              --template-file infra/template.yml \
+              --stack-name myStack-${CIRCLE_WORKFLOW_ID:0:5} \
+              --region ${AWS_DEFAULT_REGION}
+
 workflows:
-  Example-workflow:
+  udacity:
     jobs:
       - test
       - test_env_vars
@@ -79,4 +92,6 @@ workflows:
       - build:
           requires:
             - test
-      - analyze
+      - create_infra:
+          requires:
+            - build
