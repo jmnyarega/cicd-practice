@@ -1,0 +1,7 @@
+---
+- name: This is the holy grail of ci-ci 
+  hosts: all
+  user: ubuntu
+  roles:
+    - prepare
+    - apache

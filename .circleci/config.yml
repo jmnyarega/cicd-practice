@@ -22,6 +22,13 @@ commands:
       - run: cat << parameters.filename >>
       - run: echo << parameters.pipeline_id >>
 
+  destroy_infra:
+    steps:
+      - run:
+          name: destroy infrastructure
+          when: on_fail
+          command: aws cloudformation delete-stack --stack-name kc-${CIRCLE_WORKFLOW_ID:0:5}
+
 jobs:
   test_env_vars:
     <<: *defaults
@@ -68,11 +75,46 @@ jobs:
           command: echo "This is a security risk, notify the engineering team"
           when: on_fail
 
+  configure_infra:
+    docker:
+      - image: python:3.7-alpine3.11
+    steps:
+      - checkout
+      - add_ssh_keys: 
+          fingureprints:
+            - '07:71:3b:39:bf:78:f7:1e:83:1e:bd:04:b7:7b:3f:7f'
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --update ansible
+      - run:
+          name: Install tar utility
+          command: |
+            apk add --update tar gzip
+      - run:
+          name: Install deps
+          command: |
+            apk add --update --no-cache ansible
+      - attach_workspace:
+          at: .
+      - run: ls -a ~/.ssh
+      - run: cat inventory.txt
+      - run: cat ~/.ssh/id_rsa
+      - run: cat ~/.ssh/id_rsa.pub
+      - run:
+          name: Configure server
+          command: |
+            ansible-playbook -i inventory.txt ansible/main.yml --key-file ~/.ssh/id_rsa_07713b39bf78f71e831ebd04b77b3f7f
+
   create_infra: 
     docker:
       - image: amazon/aws-cli
     steps:
       - checkout
+      - run:
+          name: Install tar utility
+          command: |
+            yum install -y tar gzip
       - run:
           name: Create Cloudformation Stack
           command: |
@@ -80,18 +122,44 @@ jobs:
               --template-file infra/template.yml \
               --stack-name myStack-${CIRCLE_WORKFLOW_ID:0:5} \
               --region ${AWS_DEFAULT_REGION}
+      - run:
+          name: Get the IP
+          command: |
+            echo [ubuntu] > inventory.txt &&
+            aws ec2 describe-instances \
+              --query 'Reservations[*].Instances[*].PublicIpAddress' \
+              --output text >> inventory.txt && cat inventory.txt
+      - persist_to_workspace:
+          root: .
+          paths:
+            - inventory.txt
+      - destroy_infra
+
+  smoke_test:
+    docker:
+      - image: amazon/aws-cli
+    steps:
+      - checkout
+      - run:
+          name: simulate error
+          command: return 1
+      - destroy_infra
 
 workflows:
   udacity:
     jobs:
-      - test
-      - test_env_vars
-      - print_output_file:
+      # - test
+      # - test_env_vars
+      # - print_output_file:
+      #     requires:
+      #       - test_env_vars
+      # - build:
+      #     requires:
+      #       - test
+      - create_infra
+      - configure_infra:
           requires:
-            - test_env_vars
-      - build:
+            - create_infra
+      - smoke_test:
           requires:
-            - test
-      - create_infra:
-          requires:
-            - build
+            - configure_infra
