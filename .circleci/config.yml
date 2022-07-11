@@ -108,7 +108,13 @@ jobs:
       - checkout
       - run:
           name: smoke test simulation
-          command: return 1
+          command: |
+            if curl -s --head "https://faked33google.com"
+            then
+              echo "It worked"
+            else
+              echo "It failed"
+            fi
       - destroy_infra
 
 workflows:
