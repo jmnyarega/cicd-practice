@@ -101,6 +101,23 @@ jobs:
             - inventory.txt
       - destroy_infra
 
+
+  promote_infra:
+    docker:
+      - image: amazon/aws-cli
+    steps:
+      - checkout
+      - when:
+          condition:
+            equal: [main, << pipeline.git.branch >>]
+          steps:
+            - run:
+                name: spin up the application
+                command: |
+                    aws cloudformation deploy \
+                    --template-file infra/template.yml \
+                    --stack-name prod-${CIRCLE_WORKFLOW_ID}
+
   smoke_test:
     docker:
       - image: amazon/aws-cli
@@ -109,11 +126,11 @@ jobs:
       - run:
           name: smoke test simulation
           command: |
-            URL=https://faked33google.com
-            if curl -s --head ${URL}
+            URL_FAIL=https://faked33google.com
+            URL_SUCCESS=https://google.com
+            if curl -s --head ${URL_SUCCESS}
             then
               echo "It worked"
-              return 0
             else
               echo "It failed"
               return 1
@@ -121,7 +138,6 @@ jobs:
       - destroy_infra
 
 workflows:
-
   udacity:
     jobs:
       - test
@@ -137,3 +153,6 @@ workflows:
       - smoke_test:
           requires:
             - configure_infra
+      - promote_infra:
+          requires:
+            - smoke_test
