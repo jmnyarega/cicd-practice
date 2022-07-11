@@ -109,11 +109,14 @@ jobs:
       - run:
           name: smoke test simulation
           command: |
-            if curl -s --head "https://faked33google.com"
+            URL=https://faked33google.com
+            if curl -s --head ${URL}
             then
               echo "It worked"
+              return 0
             else
               echo "It failed"
+              return 1
             fi
       - destroy_infra
 
