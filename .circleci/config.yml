@@ -8,45 +8,14 @@ defaults: &defaults
     - image: circleci/node:latest
 
 commands:
-  print_file_and_worflow_id:
-    description: "This commans prints file contents & workflowsId"
-    parameters:
-      filename:
-        type: string
-        default: "cf.pem"
-      pipeline_id:
-        type: string
-        default: $CIRCLE_WORKFLOW_ID
-
-    steps:
-      - run: cat << parameters.filename >>
-      - run: echo << parameters.pipeline_id >>
-
   destroy_infra:
     steps:
       - run:
           name: destroy infrastructure
-          # when: on_fail
-          command: aws cloudformation delete-stack --stack-name kc-${CIRCLE_WORKFLOW_ID:0:5}
+          when: on_fail
+          command: aws cloudformation delete-stack --stack-name myStack-${CIRCLE_WORKFLOW_ID:0:5}
 
 jobs:
-  test_env_vars:
-    <<: *defaults
-    steps:
-      - checkout
-      - run: curl https://kvdb.io/6SRssvQPQ9yfGrcxuL7xTr/cf.pem > cf.pem
-      - persist_to_workspace:
-          root: .
-          paths:
-            - cf.pem
-
-  print_output_file:
-    <<: *defaults
-    steps:
-      - checkout
-      - attach_workspace:
-          at: .
-      - print_file_and_worflow_id
 
   test:
     <<: *defaults
@@ -98,16 +67,10 @@ jobs:
             apk add --update --no-cache ansible
       - attach_workspace:
           at: .
-      - run: ls -la
-      - run: ls ~/.ssh
-      - run: cat inventory.txt
-      - run: echo ${AWS_SSH}
-      - run: cat cf.pem
       - run:
           name: Configure server
           command: |
-            chmod 400 cf.pem &&
-            ansible-playbook -i inventory.txt ansible/main.yml --key-file cf.pem
+            ansible-playbook -i inventory.txt ansible/main.yml --key-file ~/.ssh/id_rsa_03d95683f502fcdee85656362060fc58
 
   create_infra: 
     docker:
@@ -144,25 +107,23 @@ jobs:
     steps:
       - checkout
       - run:
-          name: simulate error
+          name: smoke test simulation
           command: return 1
       - destroy_infra
 
 workflows:
+
   udacity:
     jobs:
-      # - test
-      - test_env_vars
-      - print_output_file:
+      - test
+      - build:
           requires:
-            - test_env_vars
-      # - build:
-      #     requires:
-      #       - test
-      - create_infra
+            - test
+      - create_infra:
+          requires:
+            - build
       - configure_infra:
           requires:
-            - print_output_file
             - create_infra
       - smoke_test:
           requires:

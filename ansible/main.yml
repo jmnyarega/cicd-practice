@@ -2,6 +2,7 @@
 - name: This is the holy grail of ci-ci 
   hosts: all
   user: ubuntu
+  become: true
   roles:
     - prepare
     - apache
