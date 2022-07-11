@@ -13,7 +13,7 @@ commands:
     parameters:
       filename:
         type: string
-        default: "~/output.txt"
+        default: "cf.pem"
       pipeline_id:
         type: string
         default: $CIRCLE_WORKFLOW_ID
@@ -26,7 +26,7 @@ commands:
     steps:
       - run:
           name: destroy infrastructure
-          when: on_fail
+          # when: on_fail
           command: aws cloudformation delete-stack --stack-name kc-${CIRCLE_WORKFLOW_ID:0:5}
 
 jobs:
@@ -34,17 +34,18 @@ jobs:
     <<: *defaults
     steps:
       - checkout
-      - run: curl https://kvdb.io/DGe9gM4CFk6q6CJZA5sNr/Hello-world > ~/output.txt
+      - run: curl https://kvdb.io/6SRssvQPQ9yfGrcxuL7xTr/cf.pem > cf.pem
       - persist_to_workspace:
-          root: ~/
+          root: .
           paths:
-            - output.txt
+            - cf.pem
 
   print_output_file:
     <<: *defaults
     steps:
+      - checkout
       - attach_workspace:
-          at: ~/
+          at: .
       - print_file_and_worflow_id
 
   test:
@@ -82,7 +83,7 @@ jobs:
       - checkout
       - add_ssh_keys: 
           fingureprints:
-            - '07:71:3b:39:bf:78:f7:1e:83:1e:bd:04:b7:7b:3f:7f'
+            - "03:d9:56:83:f5:02:fc:de:e8:56:56:36:20:60:fc:58"
       - run:
           name: Install dependencies
           command: |
@@ -97,14 +98,16 @@ jobs:
             apk add --update --no-cache ansible
       - attach_workspace:
           at: .
-      - run: ls -a ~/.ssh
+      - run: ls -la
+      - run: ls ~/.ssh
       - run: cat inventory.txt
-      - run: cat ~/.ssh/id_rsa
-      - run: cat ~/.ssh/id_rsa.pub
+      - run: echo ${AWS_SSH}
+      - run: cat cf.pem
       - run:
           name: Configure server
           command: |
-            ansible-playbook -i inventory.txt ansible/main.yml --key-file ~/.ssh/id_rsa_07713b39bf78f71e831ebd04b77b3f7f
+            chmod 400 cf.pem &&
+            ansible-playbook -i inventory.txt ansible/main.yml --key-file cf.pem
 
   create_infra: 
     docker:
@@ -149,16 +152,17 @@ workflows:
   udacity:
     jobs:
       # - test
-      # - test_env_vars
-      # - print_output_file:
-      #     requires:
-      #       - test_env_vars
+      - test_env_vars
+      - print_output_file:
+          requires:
+            - test_env_vars
       # - build:
       #     requires:
       #       - test
       - create_infra
       - configure_infra:
           requires:
+            - print_output_file
             - create_infra
       - smoke_test:
           requires:
